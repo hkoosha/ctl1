@@ -1,19 +1,24 @@
 [package]
-name = "ctl"
+name = "ctl1"
 version = "0.1.0"
 edition = "2021"
+authors = ["Koosha <i@koosha.io>"]
+description = "A terminal UI for joystick"
+readme = "README.md"
+repository = "https://github.com/hkoosha/ctl1"
+license = "Apache-2.0"
+keywords = ["gamedev", "joystick"]
 
 [dependencies]
 log = "0.4"
-# pretty_env_logger = "0.4"
-
-tokio = { version = "1.25", features = ["full"] }
+eyre = "0.6"
 bytes = "1.4"
 
-# stick = "0.12"
-stick = { path = "stick/stick" }
+tokio = { version = "1.25", features = ["full"] }
 
 tui = "0.19.0"
 crossterm = "0.26.0"
-eyre = "0.6"
 tui-logger = "0.8"
+
+# stick = "0.12"
+stick = { path = "stick/stick" }

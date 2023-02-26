@@ -2,9 +2,9 @@ use std::str::FromStr;
 use std::sync::Arc;
 use log::debug;
 
-use ctl::app::App;
-use ctl::start_ui;
-use ctl::stick::read_ctls;
+use ctl1::app::App;
+use ctl1::start_ui;
+use ctl1::stick::read_ctls;
 
 fn init_log() {
     let level_filter = if let Ok(level) = std::env::var("CTL1_LOG") {

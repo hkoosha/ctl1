@@ -1,0 +1,10 @@
+name = "Shanwan PlayStation3 Gamepad"
+type = "playstation"
+
+[remap]
+ActionA = "ActionB"
+ActionB = "ActionA"
+TriggerL = {}
+TriggerR = {}
+JoyZ = { event = "TriggerL" }
+CamZ = { event = "TriggerR" }

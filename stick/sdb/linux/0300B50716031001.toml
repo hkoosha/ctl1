@@ -1,0 +1,7 @@
+name = "Thrustmaster Flightstick"
+type = "flight"
+
+[remap]
+JoyX = { event = "JoyX", deadzone = 0.125 }
+JoyY = { event = "JoyY", deadzone = 0.125 }
+JoyZ = { event = "Throttle", max = 127, min = -128 }

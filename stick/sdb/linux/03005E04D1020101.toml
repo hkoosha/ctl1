@@ -1,0 +1,14 @@
+name = "Microsoft Xbox One Controller"
+type = "xbox"
+
+[remap]
+PovUp = "Up"
+PovDown = "Down"
+PovLeft = "Left"
+PovRight = "Right"
+JoyZ = { event = "TriggerL" }
+CamZ = { event = "TriggerR" }
+1 = "MenuL"
+4 = "Joy"
+5 = "Cam"
+MenuL = "Exit"

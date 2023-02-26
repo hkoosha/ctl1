@@ -1,0 +1,21 @@
+name = "Wii Remote - Mayflash Adapter"
+type = "nintendo"
+
+[remap]
+PovUp = "Up"
+PovDown = "Down"
+PovLeft = "Left"
+PovRight = "Right"
+Trigger = "ActionB"
+ActionM = "ActionA"
+Bumper = "ActionV"
+ActionR = "ActionH"
+0 = "BumperL"
+1 = "BumperR"
+2 = "MenuL"
+3 = "MenuR"
+4 = "Exit"
+JoyZ = "CamX"
+CamX = "CamY"
+CamY = { event = "TriggerL" }
+CamZ = { event = "TriggerR" }

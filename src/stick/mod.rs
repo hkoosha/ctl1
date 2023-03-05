@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use log::{debug, info, trace, warn};
 use stick::{Controller, Event, Listener};
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -113,7 +114,6 @@ pub struct CtlState {
     pub mouse_x: Option<f64>,
     pub mouse_y: Option<f64>,
     pub mouse: Option<bool>,
-    pub number: Option<(i8, bool)>,
     pub paddle_left: Option<bool>,
     pub paddle_right: Option<bool>,
     pub pinky_left: Option<bool>,
@@ -128,6 +128,8 @@ pub struct CtlState {
 
     pub unknown_event: Option<Event>,
     pub disconnected: bool,
+
+    pub number: HashMap<i8, bool>,
 }
 
 impl CtlState {
@@ -220,7 +222,9 @@ impl CtlState {
             Event::MouseX(v) => clone.mouse_x = Some(v),
             Event::MouseY(v) => clone.mouse_y = Some(v),
             Event::Mouse(v) => clone.mouse = Some(v),
-            Event::Number(v0, v1) => clone.number = Some((v0, v1)),
+            Event::Number(v0, v1) => {
+                clone.number.insert(v0, v1);
+            },
             Event::PaddleLeft(v) => clone.paddle_left = Some(v),
             Event::PaddleRight(v) => clone.paddle_right = Some(v),
             Event::PinkyLeft(v) => clone.pinky_left = Some(v),
@@ -273,6 +277,7 @@ async fn read_ctl(listener: &mut Listener,
     tokio::spawn(async move {
         loop {
             let event = (&mut controller).await;
+            trace!("EVENT {:?}", event);
             let ctl_event = Ctl1Event::new(
                 event,
                 controller.name().to_string(),
@@ -294,7 +299,7 @@ async fn read_ctl(listener: &mut Listener,
             }
 
             if let Event::Disconnect = &event {
-                debug!(
+                info!(
                     "controller disconnected id={:016X}, name={}",
                     controller.id(),
                     controller.name(),

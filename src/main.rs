@@ -1,8 +1,7 @@
 use std::str::FromStr;
-use std::sync::Arc;
-use log::debug;
+use std::sync::{Arc, Mutex};
 
-use ctl1::app::App;
+use ctl1::app::AppState;
 use ctl1::start_ui;
 use ctl1::stick::read_ctls;
 
@@ -23,16 +22,13 @@ async fn main() -> eyre::Result<()> {
 
     let (mut ctl_rx, _) = read_ctls();
 
-    let app = Arc::new(tokio::sync::Mutex::new(App::default()));
-    let app_ui = Arc::clone(&app);
+    let app_state = Arc::new(Mutex::new(AppState::default()));
+    let ui_app_state = app_state.clone();
 
     tokio::spawn(async move {
         while let Some(ctl_event) = ctl_rx.recv().await {
-            debug!("event: {}", ctl_event.triggering_event);
-            let mut app = app.lock().await;
-
+            let mut app = app_state.lock().unwrap();
             app.ensure_ctl(ctl_event.ctl_id, ctl_event.ctl_name);
-
             let previous = app.current.remove(&ctl_event.ctl_id).unwrap();
             let current = previous.updated(ctl_event.triggering_event);
             app.previous.insert(ctl_event.ctl_id, previous);
@@ -40,7 +36,7 @@ async fn main() -> eyre::Result<()> {
         }
     });
 
-    start_ui(app_ui).await?;
+    start_ui(ui_app_state).await?;
 
     println!();
     Ok(())

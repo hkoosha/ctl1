@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::sync::{Arc, Mutex};
 
 use tui::backend::Backend;
 use tui::Frame;
@@ -8,11 +9,12 @@ use tui::text::{Span, Text};
 use tui::widgets::{Block, Borders, BorderType, Cell, Paragraph, Row, Table};
 use tui_logger::{TuiLoggerLevelOutput, TuiLoggerSmartWidget};
 
-use crate::app::App;
+use crate::app::{AppState, AppTui};
 use crate::stick::CtlState;
-use crate::ui::action::UiActions;
 
-pub fn draw<B>(rect: &mut Frame<B>, app: &App)
+pub fn draw<B>(rect: &mut Frame<B>,
+               app_tui: &AppTui,
+               ui_state: &Arc<Mutex<AppState>>)
     where B: Backend {
     let size = rect.size();
     check_size(&size);
@@ -25,17 +27,21 @@ pub fn draw<B>(rect: &mut Frame<B>, app: &App)
     let title = draw_title();
     rect.render_widget(title, chunks[0]);
 
-    draw_ctls(app, rect, &chunks[1]);
+    draw_ctls(ui_state, rect, &chunks[1]);
 
-    if let Some(logger_widget) = draw_log(app) {
+    if let Some(logger_widget) = draw_log(app_tui) {
         rect.render_widget(logger_widget, chunks[2]);
     }
 }
 
-fn draw_ctls<B>(app: &App,
+fn draw_ctls<B>(app: &Arc<Mutex<AppState>>,
                 rect: &mut Frame<B>,
                 chunk: &Rect)
     where B: Backend {
+    let app = {
+        app.lock().unwrap().clone()
+    };
+
     let mut tables = vec![];
     for (id, current) in app.current.iter() {
         let previous = &app.previous[id];
@@ -344,6 +350,12 @@ fn draw_ctl<'a>(name: &str, current: &CtlState, previous: &CtlState) -> Table<'a
         rows.push(f64_row("Action Wheel Y", previous.action_wheel_y, current.action_wheel_y));
     }
 
+    for (num, _) in current.number.iter() {
+        rows.push(bool_row(&format!("Num#{}", num),
+                           previous.number.get(num).cloned(),
+                           current.number.get(num).cloned()));
+    }
+
     Table::new(rows)
         .block(
             Block::default()
@@ -398,7 +410,7 @@ fn f64_row(name: &str, prev: Option<f64>, curr: Option<f64>) -> Row {
     Row::new(rows)
 }
 
-fn bool_row(name: &str, prev: Option<bool>, curr: Option<bool>) -> Row {
+fn bool_row<'a>(name: &str, prev: Option<bool>, curr: Option<bool>) -> Row<'a> {
     let style0 = Style::default().fg(Color::LightCyan);
     let style1 = Style::default().fg(Color::Gray);
 
@@ -431,8 +443,12 @@ fn bool_row(name: &str, prev: Option<bool>, curr: Option<bool>) -> Row {
         }
 
         (None, Some(curr)) => {
+            let curr_string = match curr {
+                true => "ON".to_string(),
+                false => "OFF".to_string(),
+            };
             rows.push(Cell::from(Span::styled("#".to_string(), style0)));
-            rows.push(Cell::from(Span::styled(curr.to_string(), style1)));
+            rows.push(Cell::from(Span::styled(curr_string, style1)));
         }
 
         (_, _) => {
@@ -445,41 +461,7 @@ fn bool_row(name: &str, prev: Option<bool>, curr: Option<bool>) -> Row {
 }
 
 
-#[allow(dead_code)]
-fn draw_help(actions: &UiActions) -> Table {
-    let key_style = Style::default().fg(Color::LightCyan);
-    let help_style = Style::default().fg(Color::Gray);
-
-    let mut rows = vec![];
-    for action in actions.actions().iter() {
-        let mut first = true;
-        for key in action.keys() {
-            let help = if first {
-                first = false;
-                action.to_string()
-            } else {
-                String::from("")
-            };
-            let row = Row::new(vec![
-                Cell::from(Span::styled(key.to_string(), key_style)),
-                Cell::from(Span::styled(help, help_style)),
-            ]);
-            rows.push(row);
-        }
-    }
-
-    Table::new(rows)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .border_type(BorderType::Plain)
-                .title("Help"),
-        )
-        .widths(&[Constraint::Length(11), Constraint::Min(20)])
-        .column_spacing(1)
-}
-
-fn draw_log<'a>(state: &App) -> Option<TuiLoggerSmartWidget<'a>> {
+fn draw_log<'a>(app_tui: &AppTui) -> Option<TuiLoggerSmartWidget<'a>> {
     Some(TuiLoggerSmartWidget::default()
         .style_error(Style::default().fg(Color::Red))
         .style_debug(Style::default().fg(Color::Green))
@@ -492,7 +474,7 @@ fn draw_log<'a>(state: &App) -> Option<TuiLoggerSmartWidget<'a>> {
         .output_target(true)
         .output_file(true)
         .output_line(true)
-        .state(&state.tui))
+        .state(&app_tui.tui))
 }
 
 fn draw_title<'a>() -> Paragraph<'a> {

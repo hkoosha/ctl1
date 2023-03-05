@@ -20,5 +20,5 @@ tui = "0.19.0"
 crossterm = "0.26.0"
 tui-logger = "0.8"
 
-# stick = "0.12"
-stick = { path = "stick/stick" }
+stick = "0.13"
+
